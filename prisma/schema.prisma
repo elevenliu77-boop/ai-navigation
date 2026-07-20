@@ -22,10 +22,55 @@ model Setting {
   @@index([key])
 }
 
+model Post {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String   @unique
+  content     String   // Markdown content
+  excerpt     String?
+  featured_image String?
+  status      String   @default("draft") // draft | published | archived
+  view_count  Int      @default(0)
+  like_count  Int      @default(0)
+  published_at DateTime?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  category    Category @relation(fields: [category_id], references: [id])
+  category_id Int
+  tags        PostTag[]
+
+  @@map("posts")
+  @@index([slug])
+  @@index([category_id])
+  @@index([status])
+  @@index([published_at])
+}
+
+model Tag {
+  id    Int      @id @default(autoincrement())
+  name  String   @unique
+  slug  String   @unique
+  posts PostTag[]
+
+  @@map("tags")
+  @@index([slug])
+}
+
+model PostTag {
+  post    Post @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  post_id Int
+  tag     Tag  @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  tag_id  Int
+
+  @@id([post_id, tag_id])
+  @@map("post_tags")
+}
+
 model Website {
   id          Int      @id @default(autoincrement())
   title       String
-  url         String   
+  url         String
   description String
   category    Category @relation(fields: [category_id], references: [id])
   category_id Int
@@ -44,12 +89,14 @@ model Website {
 }
 
 model Category {
-  id         Int       @id @default(autoincrement())
-  name       String
-  slug       String    @unique
-  created_at DateTime  @default(now())
-  updated_at DateTime  @updatedAt
-  websites   Website[]
+  id          Int       @id @default(autoincrement())
+  name        String
+  slug        String    @unique
+  description String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  websites    Website[]
+  posts       Post[]
 
   @@map("categories")
   @@index([slug])

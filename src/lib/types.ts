@@ -1,3 +1,31 @@
+// ─────────── 文章系统 ───────────
+
+export interface Post {
+  id: number;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string | null;
+  featured_image: string | null;
+  status: "draft" | "published" | "archived";
+  view_count: number;
+  like_count: number;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+  category_id: number;
+  category?: Category;
+  tags?: Tag[];
+}
+
+export interface Tag {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+// ─────────── 导航站遗留类型 ───────────
+
 export interface Website {
   id: number;
   title: string;

@@ -7,7 +7,9 @@
     "build": "prisma db push && next build",
     "start": "next start",
     "lint": "next lint",
-    "init-data": "ts-node --project tsconfig.script.json src/lib/utils/init-data.ts"
+    "init-data": "ts-node --project tsconfig.script.json src/lib/utils/init-data.ts",
+    "seed": "ts-node --project tsconfig.script.json prisma/seed.ts",
+    "seed-posts": "ts-node --project tsconfig.script.json prisma/seed-posts.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

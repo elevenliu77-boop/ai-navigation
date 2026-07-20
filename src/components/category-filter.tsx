@@ -45,7 +45,7 @@ const buttonVariants = {
 
 export default function CategoryFilter({ categories }: CategoryFilterProps) {
   const [selectedCategory, setSelectedCategory] = useAtom(selectedCategoryAtom);
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 5 });
+  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 15 });
   const containerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -86,7 +86,7 @@ export default function CategoryFilter({ categories }: CategoryFilterProps) {
     if (direction === "left") {
       setVisibleRange((prev) => ({
         start: Math.max(0, prev.start - step),
-        end: Math.max(5, prev.end - step),
+        end: Math.max(15, prev.end - step),
       }));
     } else {
       setVisibleRange((prev) => ({

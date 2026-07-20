@@ -5,7 +5,7 @@ import type { Website, Category, FooterSettings } from "@/lib/types";
 export const websitesAtom = atom<Website[]>([]);
 export const categoriesAtom = atom<Category[]>([]);
 export const searchQueryAtom = atom("");
-export const selectedCategoryAtom = atom<number | null>(1);
+export const selectedCategoryAtom = atom<number | null>(null);
 export const isAdminModeAtom = atomWithStorage("isAdminMode", false);
 export const isCompactModeAtom = atomWithStorage("isCompactMode", false);
 export const layoutModeAtom = atomWithStorage<"top" | "sidebar">("layoutMode", "top");

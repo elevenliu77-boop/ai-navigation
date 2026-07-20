@@ -1,58 +1,80 @@
 import { prisma } from "@/lib/db/db";
-import HomePage from "@/app/home-page";
+import HomePageClient from "@/app/home-page";
 import { cachedPrismaQuery } from "@/lib/db/cache";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const startTime = Date.now();
-
-  // 分类数据可以长时间缓存
-  const categoriesData = await cachedPrismaQuery(
-    "all-categories",
+  // 分类（含文章数）
+  const categories = await cachedPrismaQuery(
+    "categories-with-counts",
     () =>
       prisma.category.findMany({
         select: {
           id: true,
           name: true,
           slug: true,
+          description: true,
+          _count: { select: { posts: true } },
         },
+        orderBy: { name: "asc" },
       }),
-    { ttl: 604800 } // 1周缓存（秒）
+    { ttl: 3600 }
   );
 
-  // 网站数据不缓存或短缓存，确保 active 状态实时更新
-  // 由于 serverless 环境下内存缓存不生效，这里直接查询数据库
-  const websitesData = await prisma.website.findMany({
-    where: { status: "approved" },
-    select: {
-      id: true,
-      title: true,
-      url: true,
-      description: true,
-      category_id: true,
-      thumbnail: true,
-      thumbnail_base64: true,
-      status: true,
-      visits: true,
-      likes: true,
-      active: true,
+  // 精选文章（按浏览量排序）
+  const featuredPosts = await prisma.post.findMany({
+    where: { status: "published" },
+    include: {
+      category: true,
+      tags: { include: { tag: true } },
     },
+    orderBy: [{ view_count: "desc" }, { published_at: "desc" }],
+    take: 5,
   });
 
-  const endTime = Date.now();
-  console.log(`数据加载耗时: ${endTime - startTime}ms`);
+  // 最新文章
+  const latestPosts = await prisma.post.findMany({
+    where: { status: "published" },
+    include: {
+      category: true,
+      tags: { include: { tag: true } },
+    },
+    orderBy: { published_at: "desc" },
+    take: 12,
+  });
 
-  // 预处理数据，减少客户端计算
-  const preFilteredWebsites = websitesData.map((website) => ({
-    ...website,
-    searchText: `${website.title.toLowerCase()} ${website.description.toLowerCase()}`,
+  const formatPost = (p: any) => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    content: p.content,
+    excerpt: p.excerpt,
+    featured_image: p.featured_image,
+    status: p.status,
+    view_count: p.view_count,
+    like_count: p.like_count,
+    published_at: p.published_at?.toISOString() ?? null,
+    created_at: p.created_at.toISOString(),
+    updated_at: p.updated_at.toISOString(),
+    category_id: p.category_id,
+    category: p.category,
+    tags: p.tags?.map((pt: any) => pt.tag) ?? [],
+  });
+
+  const categoriesData = categories.map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    description: c.description,
+    postCount: c._count.posts,
   }));
 
   return (
-    <HomePage
-      initialWebsites={preFilteredWebsites}
-      initialCategories={categoriesData}
+    <HomePageClient
+      categories={categoriesData}
+      featuredPosts={featuredPosts.map(formatPost)}
+      latestPosts={latestPosts.map(formatPost)}
     />
   );
 }
