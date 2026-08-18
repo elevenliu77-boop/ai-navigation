@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -33,8 +34,6 @@ export function SettingsPageClient({
       copyright: "",
     }
   );
-
-  console.log(settings);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

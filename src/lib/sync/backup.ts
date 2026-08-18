@@ -1,7 +1,8 @@
-import { nanoid } from "nanoid";
-import type { BackupMetadata, SyncConfig } from "./types";
+
+ 
 import { OSSInterface } from "./oss";
 import { DatabaseInterface } from "../db/sqlite";
+import type { SyncConfig } from "./types";
 
 export class BackupManager {
   private db: DatabaseInterface;

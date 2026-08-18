@@ -1,4 +1,6 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+ 
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";

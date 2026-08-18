@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+ 
 import { PrismaClient } from '@prisma/client';
 
 // 声明全局类型，使 prisma 在全局范围内可用

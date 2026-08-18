@@ -288,6 +288,14 @@ const defaultWebsites: WebsiteInput[] = [
     status: 'approved',
   },
   {
+    title: 'Claude Code',
+    url: 'https://claude.ai/code',
+    description: '面向终端和代码仓库的 AI 编程助手，适合理解项目、修改代码和运行测试。',
+    category_slug: 'ai-coding',
+    thumbnail: 'https://claude.ai/favicon.ico',
+    status: 'approved',
+  },
+  {
     title: 'Amazon CodeWhisperer',
     url: 'https://aws.amazon.com/codewhisperer/',
     description: '亚马逊推出的 AI 代码生成与建议服务，集成在 AWS 开发生态中。',
@@ -343,6 +351,14 @@ const defaultWebsites: WebsiteInput[] = [
     description: '高质量多语言 AI 语音合成平台，支持克隆声音与情感控制。',
     category_slug: 'ai-tools',
     thumbnail: 'https://elevenlabs.io/favicon.ico',
+    status: 'approved',
+  },
+  {
+    title: 'n8n',
+    url: 'https://n8n.io',
+    description: '可自托管的自动化工作流平台，把 AI、API、表格和内容渠道连接成可复用流程。',
+    category_slug: 'ai-tools',
+    thumbnail: 'https://n8n.io/favicon.ico',
     status: 'approved',
   },
   {
@@ -497,44 +513,42 @@ export async function initializeData() {
       categories.map((c: Category) => [c.slug, c.id])
     );
 
-    // 初始化网站
-    await Promise.all(
-    defaultWebsites.map(async website => {
-        const { category_slug, ...websiteData } = website;
-        const category_id = categoryMap.get(category_slug);
-        
-        if (category_id) {
-          const createData: Prisma.WebsiteCreateInput = {
-            ...websiteData,
-            category: { 
-              connect: { id: Number(category_id) } 
-            }
-          };
+    // 初始化网站（串行执行，避免并发打爆连接池）
+    for (const website of defaultWebsites) {
+      const { category_slug, ...websiteData } = website;
+      const category_id = categoryMap.get(category_slug);
 
-          const updateData: Prisma.WebsiteUpdateInput = {
-            ...websiteData,
-            category: { 
-              connect: { id: Number(category_id) } 
-            }
-          };
+      if (category_id) {
+        const createData: Prisma.WebsiteCreateInput = {
+          ...websiteData,
+          category: {
+            connect: { id: Number(category_id) },
+          },
+        };
 
-          const existingWebsite = await prisma.website.findFirst({
-            where: { url: website.url }
+        const updateData: Prisma.WebsiteUpdateInput = {
+          ...websiteData,
+          category: {
+            connect: { id: Number(category_id) },
+          },
+        };
+
+        const existingWebsite = await prisma.website.findFirst({
+          where: { url: website.url },
+        });
+
+        if (existingWebsite) {
+          await prisma.website.update({
+            where: { id: existingWebsite.id },
+            data: updateData,
           });
-
-          if (existingWebsite) {
-            return prisma.website.update({
-              where: { id: existingWebsite.id },
-              data: updateData
-            });
-          } else {
-            return prisma.website.create({
-              data: createData
-            });
-          }
+        } else {
+          await prisma.website.create({
+            data: createData,
+          });
         }
-      })
-    );
+      }
+    }
 
     // 初始化页脚链接
     await Promise.all(

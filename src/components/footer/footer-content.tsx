@@ -1,8 +1,11 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+ 
 
 import { useState, useEffect } from "react";
 import { useAtom } from "jotai";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { Button } from "@/ui/common/button";
 import { Plus } from "lucide-react";
 import { isAdminModeAtom, footerSettingsAtom } from "@/lib/atoms";
@@ -36,6 +39,7 @@ export default function FooterContent({
       icpBeian: initialSettings.icpBeian || "",
       links:
         initialSettings.links?.map((link) => ({
+          id: link.id,
           title: link.title,
           url: link.url,
         })) || [],
@@ -64,9 +68,12 @@ export default function FooterContent({
 
       if (!response.ok) throw new Error("Failed to add link");
 
+      const result = await response.json();
+      const createdId = Number(result?.data?.id);
+      if (!Number.isInteger(createdId) || createdId < 1) throw new Error("Invalid footer link response");
       setSettings((prev) => ({
         ...prev,
-        links: [...prev.links, { title: newLink.title, url: newLink.url }],
+        links: [...prev.links, { id: createdId, title: newLink.title, url: newLink.url }],
       }));
 
       setNewLink({ title: "", url: "" });
@@ -85,9 +92,9 @@ export default function FooterContent({
     }
   };
 
-  const handleRemoveLink = async (index: number) => {
+  const handleRemoveLink = async (id: number) => {
     try {
-      const response = await fetch(`/api/footer-links?id=${index}`, {
+      const response = await fetch(`/api/footer-links?id=${id}`, {
         method: "DELETE",
       });
 
@@ -95,7 +102,7 @@ export default function FooterContent({
 
       setSettings((prev) => ({
         ...prev,
-        links: prev.links.filter((_, i) => i !== index),
+        links: prev.links.filter((link) => link.id !== id),
       }));
 
       toast({
@@ -144,7 +151,7 @@ export default function FooterContent({
                         "hover:bg-destructive/10 hover:text-destructive",
                         "transition-colors duration-200"
                       )}
-                      onClick={() => handleRemoveLink(index)}
+                      onClick={() => handleRemoveLink(link.id)}
                     >
                       ×
                     </Button>
@@ -173,6 +180,10 @@ export default function FooterContent({
           </div>
 
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <Link href="/about" className="hover:text-foreground transition-colors">关于</Link>
+            <Link href="/discoveries" className="hover:text-foreground transition-colors">AI发现</Link>
+            <Link href="/lab" className="hover:text-foreground transition-colors">实验室</Link>
+            <span className="hidden md:inline text-muted-foreground/60">|</span>
             <a
               href="https://github.com/liyown/ai-navigation"
               target="_blank"

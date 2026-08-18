@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminApi } from "@/lib/auth/admin";
 import { PrismaClient } from "@prisma/client";
 import { AjaxResponse } from "@/lib/utils";
 
@@ -19,6 +20,8 @@ export async function GET() {
 
 // POST: 创建新分类
 export async function POST(request: Request) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     const { name, slug } = await request.json();
     const newCategory = await prisma.category.create({

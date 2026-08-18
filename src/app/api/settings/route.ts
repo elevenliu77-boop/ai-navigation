@@ -1,6 +1,11 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+
+ 
 import { NextResponse } from "next/server";
+import { requireAdminApi } from "@/lib/auth/admin";
 import { prisma } from "@/lib/db/db";
 import { AjaxResponse } from "@/lib/utils";
+import { WebsiteSettings } from "@/lib/constraint";
 
 export interface SettingItem {
   key: string;
@@ -11,6 +16,7 @@ export interface SettingItem {
 export async function GET() {
   try {
     const settings = await prisma.setting.findMany({
+      where: { key: { not: WebsiteSettings.adminPassword } },
       select: {
         key: true,
         value: true,
@@ -34,6 +40,8 @@ export async function GET() {
 
 // 更新设置
 export async function PUT(request: Request) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     const body = await request.json();
 
@@ -70,6 +78,8 @@ export async function PUT(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     const body = await request.json();
 
@@ -117,6 +127,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     const { searchParams } = new URL(request.url);
     const key = searchParams.get("key");

@@ -11,7 +11,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const websiteId = parseInt((await params).id);
+    const websiteId = Number((await params).id);
+    if (!Number.isInteger(websiteId) || websiteId < 1) return NextResponse.json(AjaxResponse.fail("Invalid website ID"), { status: 400 });
     const updatedWebsite = await prisma.website.update({
       where: { id: websiteId },
       data: { likes: { increment: 1 } },
@@ -35,11 +36,15 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const websiteId = parseInt((await params).id);
-    const updatedWebsite = await prisma.website.update({
-      where: { id: websiteId },
-      data: { likes: { decrement: 1 } },
-    });
+    const websiteId = Number((await params).id);
+    if (!Number.isInteger(websiteId) || websiteId < 1) return NextResponse.json(AjaxResponse.fail("Invalid website ID"), { status: 400 });
+    const updated = await prisma.website.updateMany({ where: { id: websiteId, likes: { gt: 0 } }, data: { likes: { decrement: 1 } } });
+    if (!updated.count) {
+      const website = await prisma.website.findUnique({ where: { id: websiteId }, select: { likes: true } });
+      if (!website) return NextResponse.json(AjaxResponse.fail("Website not found"), { status: 404 });
+      return NextResponse.json(AjaxResponse.ok({ likes: website.likes }));
+    }
+    const updatedWebsite = await prisma.website.findUniqueOrThrow({ where: { id: websiteId }, select: { likes: true } });
 
     return NextResponse.json(AjaxResponse.ok({ likes: updatedWebsite.likes }));
   } catch (error) {

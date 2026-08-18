@@ -65,7 +65,7 @@ export const backgroundPatternVariants: Variants = {
 
 // Icon animations
 export const floatingIconVariants: Variants = {
-  hidden: (i: number) => ({
+  hidden: () => ({
     opacity: 0,
     scale: 0.5,
     y: 20,

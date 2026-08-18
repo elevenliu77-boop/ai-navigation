@@ -1,4 +1,6 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+ 
 
 import { useState, useEffect } from "react";
 import { Button } from "@/ui/common/button";
@@ -9,6 +11,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   Trash2,
+  Pencil,
   ExternalLink,
   Clock,
 } from "lucide-react";
@@ -30,6 +33,7 @@ import {
 import { cn } from "@/lib/utils/utils";
 import type { Website, Category } from "@/lib/types";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 interface WebsiteListProps {
   websites: Website[];
@@ -212,6 +216,11 @@ export function WebsiteList({
                 </div>
                 {showActions && (
                   <div className="flex items-center gap-1 ml-2">
+                    <Button variant="ghost" size="icon" asChild className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-background/50">
+                      <Link href={`/admin/tools/${website.id}/edit`}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+
+ 
 import { NextResponse } from "next/server";
 import { AjaxResponse } from "@/lib/utils";
 

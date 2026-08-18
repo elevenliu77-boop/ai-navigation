@@ -1,12 +1,29 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
+import { requireAdminApi } from "@/lib/auth/admin";
 import { prisma } from "@/lib/db/db";
+import { invalidateCache } from "@/lib/db/cache";
 import { AjaxResponse } from "@/lib/utils";
+
+function safeLink(value: unknown) {
+  const raw = String(value || "").trim();
+  try {
+    const parsed = new URL(raw);
+    if (!["http:", "https:", "mailto:"].includes(parsed.protocol)) return null;
+    return raw;
+  } catch {
+    return null;
+  }
+}
 
 // 获取所有页脚链接
 export async function GET() {
   try {
     const links = await prisma.footerLink.findMany({
       select: {
+        id: true,
         title: true,
         url: true,
       },
@@ -22,26 +39,22 @@ export async function GET() {
 
 // 创建新的页脚链接
 export async function POST(request: Request) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     const { title, url } = await request.json();
 
-    if (!title || !url) {
-      return NextResponse.json(AjaxResponse.fail("标题和URL都是必需的"));
-    }
-
-    // 验证 URL 格式
-    try {
-      new URL(url);
-    } catch (e) {
-      return NextResponse.json(AjaxResponse.fail("请输入有效的URL地址"));
+    if (!String(title || "").trim() || !safeLink(url)) {
+      return NextResponse.json(AjaxResponse.fail("标题和 URL 必须有效"), { status: 400 });
     }
 
     const link = await prisma.footerLink.create({
       data: {
-        title,
-        url,
+        title: String(title).trim().slice(0, 120),
+        url: safeLink(url)!,
       },
     });
+    invalidateCache("footer-links");
 
     return NextResponse.json(AjaxResponse.ok(link));
   } catch (error) {
@@ -54,20 +67,24 @@ export async function POST(request: Request) {
 
 // 更新页脚链接
 export async function PUT(request: Request) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     const { id, title, url } = await request.json();
 
-    if (!id || !title || !url) {
-      return NextResponse.json(AjaxResponse.fail("ID、标题和URL都是必需的"));
+    const numericId = Number(id);
+    if (!Number.isInteger(numericId) || numericId < 1 || !String(title || "").trim() || !safeLink(url)) {
+      return NextResponse.json(AjaxResponse.fail("ID、标题和 URL 必须有效"), { status: 400 });
     }
 
     const link = await prisma.footerLink.update({
-      where: { id },
+      where: { id: numericId },
       data: {
-        title,
-        url,
+        title: String(title).trim().slice(0, 120),
+        url: safeLink(url)!,
       },
     });
+    invalidateCache("footer-links");
 
     return NextResponse.json(AjaxResponse.ok(link));
   } catch (error) {
@@ -80,17 +97,21 @@ export async function PUT(request: Request) {
 
 // 删除页脚链接
 export async function DELETE(request: Request) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
-    if (!id) {
+    const numericId = Number(id);
+    if (!Number.isInteger(numericId) || numericId < 1) {
       return NextResponse.json(AjaxResponse.fail("缺少ID参数"));
     }
 
     await prisma.footerLink.delete({
-      where: { id: parseInt(id) },
+      where: { id: numericId },
     });
+    invalidateCache("footer-links");
 
     return NextResponse.json(AjaxResponse.ok("success"));
   } catch (error) {

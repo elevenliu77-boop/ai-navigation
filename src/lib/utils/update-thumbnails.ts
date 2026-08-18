@@ -1,32 +1,7 @@
 import { PrismaClient } from "@prisma/client";
+import { fetchPublicImage } from "@/lib/utils/url-safety";
 
 const prisma = new PrismaClient();
-
-// 支持的图片类型
-const SUPPORTED_IMAGE_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-  "image/svg+xml",
-  "image/x-icon",
-  "image/vnd.microsoft.icon",
-]);
-
-// 规范化内容类型
-function normalizeContentType(contentType: string | null): string {
-  if (!contentType) return "image/jpeg";
-
-  // 处理特殊情况
-  if (
-    contentType === "image/x-icon" ||
-    contentType === "image/vnd.microsoft.icon"
-  ) {
-    return "image/x-icon";
-  }
-
-  return SUPPORTED_IMAGE_TYPES.has(contentType) ? contentType : "image/jpeg";
-}
 
 export async function updateWebsiteThumbnails() {
   try {
@@ -50,37 +25,12 @@ export async function updateWebsiteThumbnails() {
       try {
         if (!website.thumbnail) continue;
 
-        const image = await fetch(website.thumbnail);
-
-        // 检查响应状态
-        if (!image.ok) {
-          console.log(
-            `网站 ID: ${website.id} 的图片获取失败: HTTP ${image.status}`
-          );
-          continue;
-        }
-
-        // 检查内容类型
-        const rawContentType = image.headers.get("content-type");
-        const contentType = normalizeContentType(rawContentType);
-
-        if (!SUPPORTED_IMAGE_TYPES.has(contentType)) {
-          console.log(
-            `网站 ID: ${website.id} 的URL不是支持的图片类型: ${rawContentType}`
-          );
-          continue;
-        }
-
-        const arrayBuffer = await image.arrayBuffer();
-        if (arrayBuffer.byteLength === 0) {
-          console.log(`网站 ID: ${website.id} 的图片内容为空`);
-          continue;
-        }
-
-        const buffer = Buffer.from(arrayBuffer);
-        const imageBase64 = `data:${contentType};base64,${buffer.toString(
-          "base64"
-        )}`;
+        // SSRF 防护：仅允许公开 HTTP/HTTPS 图片地址，限制大小与超时
+        const { buffer, contentType } = await fetchPublicImage(website.thumbnail, {
+          maxBytes: 1_000_000,
+          timeoutMs: 10_000,
+        });
+        const imageBase64 = `data:${contentType};base64,${buffer.toString("base64")}`;
 
         await prisma.website.update({
           where: { id: website.id },

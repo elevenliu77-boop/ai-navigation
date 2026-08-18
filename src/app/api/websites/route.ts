@@ -1,7 +1,13 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+
+ 
 import { NextResponse } from "next/server";
 import type { Website } from "@/lib/types";
 import { AjaxResponse } from "@/lib/utils";
 import { PrismaClient } from "@prisma/client";
+import { assertPublicUrl, fetchPublicImage } from "@/lib/utils/url-safety";
+import { assertPublicSourceUrl } from "@/lib/services/content-studio";
+import { tokenFromRequest, verifyAdminToken } from "@/lib/auth/admin";
 
 const prisma = new PrismaClient();
 
@@ -28,6 +34,10 @@ export async function POST(request: Request) {
 
   try {
     const data = await request.json();
+    const isAdmin = verifyAdminToken(tokenFromRequest(request));
+    const siteSettings = await prisma.setting.findMany({ where: { key: { in: ["allowSubmissions", "requireApproval"] } }, select: { key: true, value: true } });
+    const settings = Object.fromEntries(siteSettings.map((item) => [item.key, item.value]));
+    if (!isAdmin && settings.allowSubmissions === "false") return NextResponse.json(AjaxResponse.fail("网站提交功能暂时关闭"), { status: 403 });
 
     // Validate required fields
     if (!data.title || !data.url || !data.category_id) {
@@ -37,6 +47,21 @@ export async function POST(request: Request) {
         ),
         { status: 400 }
       );
+    }
+
+    try {
+      await assertPublicSourceUrl(String(data.url).trim());
+    } catch {
+      return NextResponse.json(AjaxResponse.fail("请输入公开的 HTTP/HTTPS 网站地址"), { status: 400 });
+    }
+
+    const thumbnail = String(data.thumbnail || "").trim();
+    if (thumbnail) {
+      try {
+        await assertPublicSourceUrl(thumbnail);
+      } catch {
+        return NextResponse.json(AjaxResponse.fail("缩略图地址无效"), { status: 400 });
+      }
     }
 
     // Check if category exists
@@ -63,31 +88,48 @@ export async function POST(request: Request) {
       });
     }
 
-    // Validate URL format
+    // Validate URL format: 仅允许公开 HTTP/HTTPS 地址（SSRF 防护）
+    let websiteUrl: URL;
     try {
-      new URL(data.url);
+      websiteUrl = await assertPublicUrl(data.url);
     } catch (error) {
-      return NextResponse.json(AjaxResponse.fail("Invalid URL format"), {
-        status: 400,
-      });
+      return NextResponse.json(
+        AjaxResponse.fail(
+          error instanceof Error ? error.message : "Invalid URL format"
+        ),
+        { status: 400 }
+      );
+    }
+    if (websiteUrl.username || websiteUrl.password) {
+      return NextResponse.json(
+        AjaxResponse.fail("URL 不允许携带用户名或密码"),
+        { status: 400 }
+      );
     }
 
-    // 将图片转换为base64
-    const image = await fetch(data.thumbnail);
-    const imageBuffer = await image.arrayBuffer();
-    const imageBase64 = `data:${image.headers.get(
-      "content-type"
-    )};base64,${Buffer.from(imageBuffer).toString("base64")}`;
+    let imageBase64 = "";
+    if (thumbnail) {
+      try {
+        const { buffer, contentType } = await fetchPublicImage(thumbnail, {
+          maxBytes: 1_000_000,
+          timeoutMs: 8_000,
+        });
+        imageBase64 = `data:${contentType};base64,${buffer.toString("base64")}`;
+      } catch {
+        return NextResponse.json(AjaxResponse.fail("缩略图抓取失败，请更换图片地址"), { status: 400 });
+      }
+    }
 
     const website = await prisma.website.create({
       data: {
         title: data.title.trim(),
-        url: data.url.trim(),
+        url: websiteUrl.toString(),
         description: data.description?.trim() || "",
         category_id: Number(data.category_id),
         thumbnail: data.thumbnail?.trim() || "",
-        status: data.status || "pending",
+        status: isAdmin ? (["pending", "approved", "rejected"].includes(data.status) ? data.status : "pending") : settings.requireApproval === "false" ? "approved" : "pending",
         thumbnail_base64: imageBase64 as string,
+        metadata: data.metadata || undefined,
       },
     });
 

@@ -1,11 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAdminApi } from "@/lib/auth/admin";
+import { sanitizeContentFields } from "@/lib/utils/sanitize";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
 export async function DELETE(_req: Request, { params }: Props) {
+  const unauthorized = requireAdminApi(_req);
+  if (unauthorized) return unauthorized;
   const { id } = await params;
   try {
     await prisma.postTag.deleteMany({ where: { post_id: Number(id) } });
@@ -17,9 +21,12 @@ export async function DELETE(_req: Request, { params }: Props) {
 }
 
 export async function PUT(req: Request, { params }: Props) {
+  const unauthorized = requireAdminApi(req);
+  if (unauthorized) return unauthorized;
   const { id } = await params;
   try {
     const data = await req.json();
+    sanitizeContentFields(data, ["content"], ["title", "excerpt"]);
 
     // Handle publishing
     if (data.status === "published") {

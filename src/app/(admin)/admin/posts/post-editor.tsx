@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -29,18 +30,21 @@ interface PostEditorProps {
     slug: string;
     content: string;
     excerpt: string;
+    metadata?: any;
     status: string;
     category_id: number;
     tags: { id: number; name: string; slug: string }[];
   };
   categories: { id: number; name: string; slug: string }[];
   tags: { id: number; name: string; slug: string }[];
+  backHref?: string;
 }
 
 export default function PostEditor({
   initialData,
   categories,
   tags,
+  backHref = "/admin/posts",
 }: PostEditorProps) {
   const router = useRouter();
   const isEdit = !!initialData;
@@ -50,6 +54,10 @@ export default function PostEditor({
   const [slug, setSlug] = useState(initialData?.slug || "");
   const [content, setContent] = useState(initialData?.content || "");
   const [excerpt, setExcerpt] = useState(initialData?.excerpt || "");
+  const initialMetadata = initialData?.metadata || {};
+  const [discoveryWhy, setDiscoveryWhy] = useState(initialMetadata.why || "");
+  const [discoveryAudience, setDiscoveryAudience] = useState((initialMetadata.audience || []).join(", "));
+  const [discoveryScenarios, setDiscoveryScenarios] = useState((initialMetadata.scenarios || []).join(", "));
   const [status, setStatus] = useState(initialData?.status || "draft");
   const [categoryId, setCategoryId] = useState(
     String(initialData?.category_id || "")
@@ -78,6 +86,7 @@ export default function PostEditor({
         slug,
         content,
         excerpt,
+        metadata: { ...initialData?.metadata, why: discoveryWhy, audience: discoveryAudience.split(",").map((item: string) => item.trim()).filter(Boolean), scenarios: discoveryScenarios.split(",").map((item: string) => item.trim()).filter(Boolean) },
         status: finalStatus,
         category_id: Number(categoryId),
         tags: selectedTags,
@@ -99,7 +108,7 @@ export default function PostEditor({
       }
 
       if (res.ok) {
-        router.push("/admin/posts");
+        router.push(backHref);
         router.refresh();
       } else {
         const err = await res.json();
@@ -124,7 +133,7 @@ export default function PostEditor({
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link href="/admin/posts">
+          <Link href={backHref}>
             <Button variant="ghost" size="sm">
               <ArrowLeft className="w-4 h-4" />
             </Button>
@@ -189,6 +198,17 @@ export default function PostEditor({
               </div>
             </CardContent>
           </Card>
+
+          {categories.find((cat) => cat.id === Number(categoryId))?.slug === "ai-discovery" && (
+            <Card>
+              <CardHeader><CardTitle className="text-sm">AI发现信息</CardTitle></CardHeader>
+              <CardContent className="space-y-3">
+                <Textarea value={discoveryWhy} onChange={(e) => setDiscoveryWhy(e.target.value)} placeholder="为什么值得关注..." className="min-h-[70px] text-sm" />
+                <Input value={discoveryAudience} onChange={(e) => setDiscoveryAudience(e.target.value)} placeholder="适合谁，逗号分隔" />
+                <Input value={discoveryScenarios} onChange={(e) => setDiscoveryScenarios(e.target.value)} placeholder="使用场景，逗号分隔" />
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* 侧边栏 */}

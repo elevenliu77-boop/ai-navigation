@@ -53,7 +53,7 @@ export function WaveWrapper({
         onMouseEnter={playOnHover ? (e) => {
           const target = e.currentTarget;
           target.style.animation = 'none';
-          target.offsetHeight; // Trigger reflow
+          void target.offsetHeight; // Trigger reflow
           target.style.animation = '';
           target.animate([
             { transform: 'scale(1) translateY(0)' },
@@ -93,7 +93,7 @@ export function WaveWrapper({
       onMouseEnter={playOnHover ? (e) => {
         const target = e.currentTarget;
         target.style.animation = 'none';
-        target.offsetHeight; // Trigger reflow
+        void target.offsetHeight; // Trigger reflow
         target.style.animation = '';
         target.animate([
           { transform: 'scale(1) translateY(0)' },
