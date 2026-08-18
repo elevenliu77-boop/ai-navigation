@@ -1,7 +1,18 @@
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/db/db";
 import PostsList from "./posts-list";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata() {
+  return {
+    title: "AI知识库 | AI教程与应用方法",
+    description: "学习 AI 技术、应用方法和实践经验，把 AI 知识转化为可执行的解决方案。",
+    keywords: ["AI知识库", "AI教程", "AI应用", "AI学习", "人工智能实践"],
+    openGraph: { title: "AI知识库 | alphahole", description: "学习 AI 技术、应用方法和实践经验。", type: "website" },
+  };
+}
 
 interface Props {
   searchParams: Promise<{ page?: string; category?: string; tag?: string; q?: string }>;

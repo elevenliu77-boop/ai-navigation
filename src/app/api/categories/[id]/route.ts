@@ -1,4 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+
+ 
 import { NextResponse } from "next/server";
+import { requireAdminApi } from "@/lib/auth/admin";
 import type { Category } from "@/lib/types";
 import { AjaxResponse } from "@/lib/utils";
 import { PrismaClient } from "@prisma/client";
@@ -10,6 +14,8 @@ export async function PUT(
   request: Request,
   props: { params: Promise<{ id: string }> }
 ) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   const params = await props.params;
   try {
     const { name, slug } = await request.json();
@@ -49,6 +55,8 @@ export async function DELETE(
   request: Request,
   props: { params: Promise<{ id: string }> }
 ) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   const params = await props.params;
   try {
     const id = parseInt(params.id);

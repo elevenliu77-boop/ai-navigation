@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import { updateWebsiteThumbnails } from "@/lib/utils/update-thumbnails";
 import { AjaxResponse } from "@/lib/utils";
+import { requireAdminApi } from "@/lib/auth/admin";
 
-export async function POST() {
+export async function POST(request: Request) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     console.log("手动触发缩略图更新任务");
     await updateWebsiteThumbnails();

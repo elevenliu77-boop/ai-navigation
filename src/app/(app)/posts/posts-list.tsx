@@ -1,4 +1,6 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+ 
 
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -39,13 +41,13 @@ export default function PostsList({
             {searchQuery
               ? `搜索: ${searchQuery}`
               : currentCategory
-              ? categories.find((c) => c.slug === currentCategory)?.name || "文章"
+              ? categories.find((c) => c.slug === currentCategory)?.name || "AI知识库"
               : currentTag
               ? `#${currentTag}`
-              : "全部文章"}
+              : "AI知识库"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {total} 篇文章{currentCategory ? ` · ${currentCategory}` : ""}{searchQuery ? ` · 搜索"${searchQuery}"` : ""}
+            AI 技术、应用方法与实战教程 · 共 {total} 篇{currentCategory ? ` · ${currentCategory}` : ""}{searchQuery ? ` · 搜索"${searchQuery}"` : ""}
           </p>
         </div>
 

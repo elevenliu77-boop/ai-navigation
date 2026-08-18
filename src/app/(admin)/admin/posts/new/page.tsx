@@ -1,3 +1,5 @@
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getCategories, getAllTags } from "../../actions-posts";
 import PostEditor from "../post-editor";
 

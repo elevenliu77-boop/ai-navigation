@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { AjaxResponse } from "@/lib/utils";
 import { PrismaClient } from "@prisma/client";
+import { requireAdminApi } from "@/lib/auth/admin";
+import { assertPublicSourceUrl } from "@/lib/services/content-studio";
 
 const prisma = new PrismaClient();
 
 // GET /api/websites/[id]
 // 获取单个网站
-export async function GET({ params }: { params: Promise<{ id: string }> }) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const websiteId = parseInt((await params).id);
     const website = await prisma.website.findUnique({
@@ -31,7 +33,9 @@ export async function GET({ params }: { params: Promise<{ id: string }> }) {
 
 // DELETE /api/websites/[id]
 // 删除网站
-export async function DELETE({ params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     if (!(await params).id) {
       return NextResponse.json(AjaxResponse.fail("Website ID is required"), {});
@@ -78,6 +82,8 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     const data = await request.json();
     const websiteId = parseInt((await params).id);
@@ -101,6 +107,13 @@ export async function PUT(
       );
     }
 
+    try {
+      await assertPublicSourceUrl(String(data.url).trim());
+      if (data.thumbnail) await assertPublicSourceUrl(String(data.thumbnail).trim());
+    } catch {
+      return NextResponse.json(AjaxResponse.fail("请输入公开的 HTTP/HTTPS 地址"), { status: 400 });
+    }
+
     const category = await prisma.category.findUnique({
       where: { id: Number(data.category_id) },
     });
@@ -120,6 +133,7 @@ export async function PUT(
         category_id: Number(data.category_id),
         thumbnail: data.thumbnail || "",
         status: data.status || existingWebsite.status,
+        metadata: data.metadata ?? existingWebsite.metadata,
       },
     });
 

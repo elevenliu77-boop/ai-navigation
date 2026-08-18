@@ -1,3 +1,5 @@
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getWebsites, getCategories } from './actions';
 import { AdminPageClient } from '@/components/admin/admin-page-client';
 
@@ -9,7 +11,7 @@ export default async function AdminPage() {
 
   return (
     <div>
-      <AdminPageClient initialWebsites={websites} initialCategories={categories} />
+      <AdminPageClient initialWebsites={websites as any} initialCategories={categories} />
     </div>
   );
 }

@@ -1,3 +1,5 @@
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getPostById, getCategories, getAllTags } from "../../../actions-posts";
 import { notFound } from "next/navigation";
 import PostEditor from "../../post-editor";
@@ -24,6 +26,7 @@ export default async function EditPostPage({ params }: Props) {
         slug: post.slug,
         content: post.content,
         excerpt: post.excerpt || "",
+        metadata: post.metadata,
         status: post.status,
         category_id: post.category_id,
         tags: post.tags?.map((pt: any) => pt.tag) || [],

@@ -1,32 +1,33 @@
 "use client";
+ 
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { Brain } from "lucide-react";
 import { Button } from "@/ui/common/button";
 import ThemeSwitch from "@/components/theme-switcher/theme-switch";
 
-interface Category {
-  id: number;
-  name: string;
-  slug: string;
-}
+// 全站统一导航（V2.2 产品定位：AI效率与赚钱实验室）
+const navItems = [
+  { href: "/", label: "首页" },
+  { href: "/tools", label: "AI工具库" },
+  { href: "/posts", label: "AI知识库" },
+  { href: "/cases", label: "AI赚钱案例" },
+  { href: "/workflows", label: "AI工作流" },
+  { href: "/prompts", label: "提示词库" },
+  { href: "/resources", label: "资源中心" },
+];
+
+// 更多菜单（二级入口）
+const moreItems = [
+  { href: "/discoveries", label: "AI发现", desc: "每日新工具与项目" },
+  { href: "/lab", label: "alphahole实验室", desc: "判断工具与实验" },
+  { href: "/about", label: "关于", desc: "项目介绍与联系" },
+];
 
 export default function Header() {
-  const [categories, setCategories] = useState<Category[]>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/categories")
-      .then((r) => r.json())
-      .then((data) => {
-        // data 可能是 AjaxResponse {code, data} 或原始数组
-        const list = Array.isArray(data) ? data : data?.data ?? [];
-        if (Array.isArray(list)) setCategories(list);
-      })
-      .catch(() => {});
-  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/30 backdrop-blur-xl">
@@ -43,43 +44,45 @@ export default function Header() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
-            <Link href="/">
-              <Button variant="ghost" size="sm">
-                首页
-              </Button>
-            </Link>
-
-            {/* 分类下拉 */}
-            {categories.length > 0 && (
-              <div className="relative group">
-                <Button variant="ghost" size="sm" className="gap-1">
-                  分类 <ChevronDown className="w-3 h-3" />
+            {navItems.map((item) => (
+              <Link key={item.href} href={item.href}>
+                <Button variant="ghost" size="sm">
+                  {item.label}
                 </Button>
-                <div className="absolute top-full left-0 mt-1 w-48 rounded-xl border border-border/40 bg-background/80 backdrop-blur-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <div className="p-2 space-y-1">
-                    {categories.map((cat) => (
-                      <Link
-                        key={cat.id}
-                        href={`/category/${cat.slug}`}
-                        className="block px-3 py-2 text-sm rounded-lg hover:bg-accent transition-colors"
-                      >
-                        {cat.name}
-                      </Link>
-                    ))}
-                  </div>
+              </Link>
+            ))}
+
+            {/* 更多下拉 */}
+            <div className="relative group">
+              <Button variant="ghost" size="sm" className="gap-1">
+                更多 <ChevronDown className="w-3 h-3" />
+              </Button>
+              <div className="absolute top-full left-0 mt-1 w-52 rounded-xl border border-border/40 bg-background/90 backdrop-blur-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <div className="p-2 space-y-1">
+                  {moreItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="block px-3 py-2 text-sm rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <span className="font-medium">{item.label}</span>
+                      <span className="block text-xs text-muted-foreground mt-0.5">
+                        {item.desc}
+                      </span>
+                    </Link>
+                  ))}
                 </div>
               </div>
-            )}
+            </div>
 
-            <Link href="/posts">
-              <Button variant="ghost" size="sm">
-                文章
+            <Link href="/assistant">
+              <Button variant="default" size="sm">
+                AI助手
               </Button>
             </Link>
-
-            <Link href="/about">
-              <Button variant="ghost" size="sm">
-                关于
+            <Link href="/membership">
+              <Button variant="outline" size="sm">
+                会员中心
               </Button>
             </Link>
 
@@ -106,24 +109,39 @@ export default function Header() {
         {/* Mobile Menu */}
         {mobileOpen && (
           <div className="md:hidden border-t border-border/20 py-4 space-y-2">
-            <Link href="/" className="block px-3 py-2 rounded-lg hover:bg-accent" onClick={() => setMobileOpen(false)}>
-              首页
-            </Link>
-            {categories.map((cat) => (
+            {navItems.map((item) => (
               <Link
-                key={cat.id}
-                href={`/category/${cat.slug}`}
-                className="block px-3 py-2 rounded-lg hover:bg-accent text-sm ml-2"
+                key={item.href}
+                href={item.href}
+                className="block px-3 py-2 rounded-lg hover:bg-accent"
                 onClick={() => setMobileOpen(false)}
               >
-                {cat.name}
+                {item.label}
               </Link>
             ))}
-            <Link href="/posts" className="block px-3 py-2 rounded-lg hover:bg-accent" onClick={() => setMobileOpen(false)}>
-              文章
+            {moreItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="block px-3 py-2 rounded-lg hover:bg-accent text-sm"
+                onClick={() => setMobileOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              href="/assistant"
+              className="block px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/15"
+              onClick={() => setMobileOpen(false)}
+            >
+              AI助手
             </Link>
-            <Link href="/about" className="block px-3 py-2 rounded-lg hover:bg-accent" onClick={() => setMobileOpen(false)}>
-              关于
+            <Link
+              href="/membership"
+              className="block px-3 py-2 rounded-lg hover:bg-accent"
+              onClick={() => setMobileOpen(false)}
+            >
+              会员中心
             </Link>
           </div>
         )}

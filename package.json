@@ -4,12 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma db push && next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "init-data": "ts-node --project tsconfig.script.json src/lib/utils/init-data.ts",
     "seed": "ts-node --project tsconfig.script.json prisma/seed.ts",
-    "seed-posts": "ts-node --project tsconfig.script.json prisma/seed-posts.ts"
+    "seed-posts": "ts-node --project tsconfig.script.json prisma/seed-posts.ts",
+    "seed-v2": "ts-node --project tsconfig.script.json prisma/seed-v2.ts",
+    "seed-stage2": "ts-node --project tsconfig.script.json prisma/seed-stage2.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -45,11 +47,15 @@
     "@tanstack/react-virtual": "^3.11.2",
     "@types/cron": "^2.0.1",
     "@vercel/analytics": "^1.4.1",
+    "ali-oss": "^6.23.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
     "critters": "^0.0.23",
     "cron": "^3.3.2",
+    "embla-carousel-react": "^8.6.0",
     "framer-motion": "^11.15.0",
+    "input-otp": "^1.4.2",
     "jotai": "^2.10.4",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.468.0",
@@ -60,9 +66,12 @@
     "react-day-picker": "^9.4.4",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.54.1",
+    "react-resizable-panels": "^4.12.2",
+    "recharts": "^3.10.1",
     "sonner": "^1.7.1",
     "swr": "^2.2.5",
     "tailwind-merge": "^2.5.5",
+    "vaul": "^1.1.2",
     "zod": "^3.24.1"
   },
   "devDependencies": {

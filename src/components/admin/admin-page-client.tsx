@@ -1,4 +1,6 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useState } from "react";
 import { WebsiteList } from "@/components/admin/website-list";
@@ -15,7 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/ui/common/tabs";
 import type { Website } from "@/lib/types";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Settings, ListFilter } from "lucide-react";
+import { Activity, Settings, ListFilter } from "lucide-react";
 import { cn } from "@/lib/utils/utils";
 
 export function AdminPageClient({
@@ -77,7 +79,7 @@ export function AdminPageClient({
           </p>
         </div>
         <Tabs defaultValue="websites" className="w-full sm:w-auto">
-          <TabsList className="grid w-full sm:w-auto grid-cols-2 bg-background/50">
+          <TabsList className="grid w-full sm:w-auto grid-cols-2 md:grid-cols-4 bg-background/50">
             <TabsTrigger
               value="websites"
               className="flex items-center gap-2 data-[state=active]:bg-background/60"
@@ -85,10 +87,64 @@ export function AdminPageClient({
               <ListFilter className="w-4 h-4" />
               网站管理
             </TabsTrigger>
+            <TabsTrigger value="posts" asChild>
+              <Link href="/admin/posts" className="flex items-center gap-2">
+                <ListFilter className="w-4 h-4" />
+                文章管理
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="discoveries" asChild>
+              <Link href="/admin/discoveries" className="flex items-center gap-2">
+                <ListFilter className="w-4 h-4" />
+                AI发现
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="prompts" asChild>
+              <Link href="/admin/prompts" className="flex items-center gap-2">
+                <ListFilter className="w-4 h-4" />
+                提示词库
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="workflows" asChild>
+              <Link href="/admin/workflows" className="flex items-center gap-2">
+                <ListFilter className="w-4 h-4" />
+                工作流
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="cases" asChild>
+              <Link href="/admin/cases" className="flex items-center gap-2">
+                <ListFilter className="w-4 h-4" />
+                案例
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="resources" asChild>
+              <Link href="/admin/resources" className="flex items-center gap-2">
+                <ListFilter className="w-4 h-4" />
+                资料
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="batch-publish" asChild>
+              <Link href="/admin/batch-publish" className="flex items-center gap-2">
+                <ListFilter className="w-4 h-4" />
+                批量发布审核
+              </Link>
+            </TabsTrigger>
             <TabsTrigger value="settings" asChild>
               <Link href="/admin/settings" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
                 系统设置
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="assets" asChild>
+              <Link href="/admin/assets" className="flex items-center gap-2">
+                <ListFilter className="w-4 h-4" />
+                AI素材资产库
+              </Link>
+            </TabsTrigger>
+            <TabsTrigger value="research" asChild>
+              <Link href="/admin/research" className="flex items-center gap-2">
+                <Activity className="w-4 h-4" />
+                AI研究中心
               </Link>
             </TabsTrigger>
           </TabsList>

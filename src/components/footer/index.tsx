@@ -12,6 +12,7 @@ export async function Footer() {
       () =>
         prisma.footerLink.findMany({
           select: {
+            id: true,
             title: true,
             url: true,
           },
@@ -47,7 +48,7 @@ export async function Footer() {
 
   const footerSettings: FooterSettings = {
     links: footerLinks,
-    copyright: settingsMap[WebsiteSettings.siteCopyright] || "© 2024 AI导航",
+    copyright: settingsMap[WebsiteSettings.siteCopyright] || "© 2026 alphahole",
     icpBeian: settingsMap[WebsiteSettings.siteIcp] || "",
     customHtml: settingsMap[WebsiteSettings.customHtml] || "",
   };

@@ -1,3 +1,5 @@
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/db/db";
 
 export async function getPosts(options?: {

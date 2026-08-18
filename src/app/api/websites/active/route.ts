@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { AjaxResponse } from "@/lib/utils";
 import { invalidateCache } from "@/lib/db/cache";
+import { assertPublicSourceUrl } from "@/lib/services/content-studio";
+import { requireAdminApi } from "@/lib/auth/admin";
 
 interface CheckUrlResponse {
   isAlive: boolean;
@@ -17,7 +19,6 @@ async function checkUrl(url: string): Promise<CheckUrlResponse> {
   }
 
   const fetchOptions = {
-    redirect: "follow" as const,
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -25,6 +26,19 @@ async function checkUrl(url: string): Promise<CheckUrlResponse> {
       "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
     },
   };
+
+  async function fetchPublicUrl(input: string, options: RequestInit) {
+    let current = input;
+    for (let hop = 0; hop < 4; hop += 1) {
+      await assertPublicSourceUrl(current);
+      const response = await fetch(current, { ...options, redirect: "manual" });
+      if (![301, 302, 303, 307, 308].includes(response.status)) return response;
+      const location = response.headers.get("location");
+      if (!location) return response;
+      current = new URL(location, current).toString();
+    }
+    throw new Error("Too many redirects");
+  }
 
   // 尝试多种检测方法
   const checkMethods = [
@@ -34,7 +48,7 @@ async function checkUrl(url: string): Promise<CheckUrlResponse> {
       const timeoutId = setTimeout(() => controller.abort(), 8000);
 
       try {
-        const response = await fetch(checkUrl, {
+        const response = await fetchPublicUrl(checkUrl, {
           ...fetchOptions,
           method: "HEAD",
           signal: controller.signal,
@@ -61,7 +75,7 @@ async function checkUrl(url: string): Promise<CheckUrlResponse> {
       const timeoutId = setTimeout(() => controller.abort(), 8000);
 
       try {
-        const response = await fetch(checkUrl, {
+        const response = await fetchPublicUrl(checkUrl, {
           ...fetchOptions,
           method: "GET",
           signal: controller.signal,
@@ -88,7 +102,7 @@ async function checkUrl(url: string): Promise<CheckUrlResponse> {
         const timeoutId = setTimeout(() => controller.abort(), 8000);
 
         try {
-          const response = await fetch(httpUrl, {
+          const response = await fetchPublicUrl(httpUrl, {
             ...fetchOptions,
             method: "GET",
             signal: controller.signal,
@@ -128,6 +142,8 @@ async function checkUrl(url: string): Promise<CheckUrlResponse> {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   try {
     const { url, id: websiteId } = await request.json();
 
@@ -137,11 +153,14 @@ export async function POST(request: Request) {
       });
     }
 
+    const website = await prisma.website.findUnique({ where: { id: websiteId }, select: { url: true } });
+    if (!website?.url) return NextResponse.json(AjaxResponse.fail("Website not found"), { status: 404 });
+
     if (!url) {
       return NextResponse.json(AjaxResponse.fail("url必须传递"));
     }
 
-    const result = await checkUrl(url);
+    const result = await checkUrl(website.url);
 
     const updatedWebsite = await prisma.website.update({
       where: { id: websiteId },

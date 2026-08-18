@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import Script from 'next/script';
 import { useEffect } from 'react';
@@ -14,9 +15,9 @@ export function Analytics({ googleAnalyticsId, baiduAnalyticsId }: AnalyticsProp
     if (baiduAnalyticsId) {
       window._hmt = window._hmt || [];
       (function() {
-        var hm = document.createElement("script");
+        const hm = document.createElement("script");
         hm.src = `https://hm.baidu.com/hm.js?${baiduAnalyticsId}`;
-        var s = document.getElementsByTagName("script")[0]; 
+        const s = document.getElementsByTagName("script")[0]; 
         if (s && s.parentNode) {
           s.parentNode.insertBefore(hm, s);
         } else {

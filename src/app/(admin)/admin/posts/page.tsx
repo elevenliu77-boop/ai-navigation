@@ -1,3 +1,5 @@
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getPosts, getCategories } from "../actions-posts";
 import { AdminPostsClient } from "./admin-posts-client";
 

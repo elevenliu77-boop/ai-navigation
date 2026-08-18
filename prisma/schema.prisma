@@ -18,43 +18,49 @@ model Setting {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@map("settings")
   @@index([key])
+  @@map("settings")
 }
 
 model Post {
-  id          Int      @id @default(autoincrement())
-  title       String
-  slug        String   @unique
-  content     String   // Markdown content
-  excerpt     String?
+  id             Int       @id @default(autoincrement())
+  title          String
+  slug           String    @unique
+  content        String // Markdown content
+  excerpt        String?
+  metadata       Json? // discovery-specific fields
   featured_image String?
-  status      String   @default("draft") // draft | published | archived
-  view_count  Int      @default(0)
-  like_count  Int      @default(0)
-  published_at DateTime?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  featured       Boolean   @default(false)
+  status         String    @default("draft") // draft | published | archived
+  view_count     Int       @default(0)
+  like_count     Int       @default(0)
+  published_at   DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
 
-  category    Category @relation(fields: [category_id], references: [id])
-  category_id Int
-  tags        PostTag[]
+  category      Category             @relation(fields: [category_id], references: [id])
+  category_id   Int
+  tags          PostTag[]
+  studio_assets ContentStudioAsset[]
 
-  @@map("posts")
   @@index([slug])
   @@index([category_id])
   @@index([status])
   @@index([published_at])
+  @@map("posts")
 }
 
 model Tag {
-  id    Int      @id @default(autoincrement())
-  name  String   @unique
-  slug  String   @unique
-  posts PostTag[]
+  id        Int           @id @default(autoincrement())
+  name      String        @unique
+  slug      String        @unique
+  posts     PostTag[]
+  prompts   PromptTag[]
+  workflows WorkflowTag[]
+  cases     CaseTag[]
 
-  @@map("tags")
   @@index([slug])
+  @@map("tags")
 }
 
 model PostTag {
@@ -68,48 +74,603 @@ model PostTag {
 }
 
 model Website {
-  id          Int      @id @default(autoincrement())
-  title       String
-  url         String
-  description String
-  category    Category @relation(fields: [category_id], references: [id])
-  category_id Int
-  thumbnail   String?
+  id               Int      @id @default(autoincrement())
+  title            String
+  url              String
+  description      String
+  category         Category @relation(fields: [category_id], references: [id])
+  category_id      Int
+  thumbnail        String?
   thumbnail_base64 String?
-  status      String   @default("pending")
-  visits      Int      @default(0)
-  likes       Int      @default(0)
-  active      Int      @default(1)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  status           String   @default("pending")
+  visits           Int      @default(0)
+  likes            Int      @default(0)
+  metadata         Json?
+  active           Int      @default(1)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 
-  @@map("websites")
   @@index([category_id])
   @@index([status])
+  @@map("websites")
+}
+
+// Prompt 库
+model Prompt {
+  id           Int         @id @default(autoincrement())
+  title        String
+  slug         String      @unique
+  content      String // Prompt 正文
+  excerpt      String?
+  category     Category    @relation(fields: [category_id], references: [id])
+  category_id  Int
+  status       String      @default("draft") // draft | published | archived
+  featured     Boolean     @default(false)
+  view_count   Int         @default(0)
+  like_count   Int         @default(0)
+  copy_count   Int         @default(0)
+  metadata     Json?
+  published_at DateTime?
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+  tags         PromptTag[]
+
+  @@index([slug])
+  @@index([category_id])
+  @@index([status])
+  @@index([published_at])
+  @@map("prompts")
+}
+
+model PromptTag {
+  prompt    Prompt @relation(fields: [prompt_id], references: [id], onDelete: Cascade)
+  prompt_id Int
+  tag       Tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  tag_id    Int
+
+  @@id([prompt_id, tag_id])
+  @@map("prompt_tags")
+}
+
+// 工作流库
+model Workflow {
+  id           Int           @id @default(autoincrement())
+  title        String
+  slug         String        @unique
+  description  String
+  steps        Json // [{ title, description, tools }]
+  tools        Json? // [{ name, url }]
+  metadata     Json? // { audience, effect }
+  category     Category      @relation(fields: [category_id], references: [id])
+  category_id  Int
+  status       String        @default("draft") // draft | published | archived
+  featured     Boolean       @default(false)
+  view_count   Int           @default(0)
+  like_count   Int           @default(0)
+  published_at DateTime?
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+  tags         WorkflowTag[]
+
+  @@index([slug])
+  @@index([category_id])
+  @@index([status])
+  @@index([published_at])
+  @@map("workflows")
+}
+
+model WorkflowTag {
+  workflow    Workflow @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+  workflow_id Int
+  tag         Tag      @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  tag_id      Int
+
+  @@id([workflow_id, tag_id])
+  @@map("workflow_tags")
+}
+
+// 案例库
+model CaseStudy {
+  id           Int       @id @default(autoincrement())
+  title        String
+  slug         String    @unique
+  summary      String
+  content      String // Markdown 正文
+  cover        String?
+  result       Json? // [{ label, value }] 案例效果数据
+  category     Category  @relation(fields: [category_id], references: [id])
+  category_id  Int
+  status       String    @default("draft") // draft | published | archived
+  featured     Boolean   @default(false)
+  view_count   Int       @default(0)
+  like_count   Int       @default(0)
+  metadata     Json? // revenue model, cost, audience, difficulty, cycle, tools
+  published_at DateTime?
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+  tags         CaseTag[]
+
+  @@index([slug])
+  @@index([category_id])
+  @@index([status])
+  @@index([published_at])
+  @@map("case_studies")
+}
+
+model CaseTag {
+  case_study    CaseStudy @relation(fields: [case_study_id], references: [id], onDelete: Cascade)
+  case_study_id Int
+  tag           Tag       @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+  tag_id        Int
+
+  @@id([case_study_id, tag_id])
+  @@map("case_tags")
+}
+
+// 资料库（会员体系预留，permission 字段预留给未来 VIP）
+model Resource {
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  type        String    @default("file") // pdf | template | video | file
+  description String?
+  url         String
+  category    Category? @relation(fields: [category_id], references: [id])
+  category_id Int?
+  permission  String    @default("FREE") // FREE | VIP
+  downloads   Int       @default(0)
+  status      String    @default("published") // published | hidden
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  @@index([slug])
+  @@index([category_id])
+  @@index([status])
+  @@map("resources")
 }
 
 model Category {
-  id          Int       @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   name        String
-  slug        String    @unique
+  slug        String      @unique
   description String?
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @updatedAt
+  type        String      @default("website") // website | post | prompt | workflow | case | resource | discovery
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
   websites    Website[]
   posts       Post[]
+  prompts     Prompt[]
+  workflows   Workflow[]
+  cases       CaseStudy[]
+  resources   Resource[]
 
-  @@map("categories")
   @@index([slug])
+  @@map("categories")
 }
 
 model FooterLink {
   id         Int      @id @default(autoincrement())
-  title      String   // 链接标题
+  title      String // 链接标题
   url        String   @unique // 链接地址
   isExternal Boolean  @default(true) // 是否为外部链接
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@map("footer_links")
   @@index([url])
+  @@map("footer_links")
+}
+
+model Favorite {
+  id          Int      @id @default(autoincrement())
+  visitor_key String
+  target_type String
+  target_id   Int
+  created_at  DateTime @default(now())
+
+  @@unique([visitor_key, target_type, target_id])
+  @@index([target_type, target_id])
+  @@map("favorites")
+}
+
+model Asset {
+  id                   Int       @id @default(autoincrement())
+  assetCode            String    @unique @map("asset_code")
+  sourceUrl            String    @unique @map("source_url")
+  sourceType           String    @default("OTHER") @map("source_type")
+  title                String    @default("")
+  author               String?
+  description          String?   @db.Text
+  category             String    @default("AI发现")
+  status               String    @default("NEW")
+  priority             String    @default("C")
+  score                Int       @default(0)
+  researchNotes        String?   @map("research_notes") @db.Text
+  businessAnalysis     String?   @map("business_analysis") @db.Text
+  verificationNotes    String?   @map("verification_notes") @db.Text
+  officialSources      Json?     @map("official_sources")
+  finalDecision        String?   @map("final_decision")
+  contentPackage       Json?     @map("content_package")
+  researchStatus       String    @default("PENDING") @map("research_status")
+  researchStartedAt    DateTime? @map("research_started_at")
+  researchCompletedAt  DateTime? @map("research_completed_at")
+  lastResearchUpdateAt DateTime? @map("last_research_update_at")
+  researcherNotes      String?   @map("researcher_notes") @db.Text
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  researchTasks ResearchTask[]
+  researchLogs  ResearchLog[]
+
+  @@index([sourceType])
+  @@index([category])
+  @@index([status])
+  @@index([priority])
+  @@index([score])
+  @@index([updatedAt])
+  @@index([researchStatus])
+  @@map("assets")
+}
+
+model ResearchTask {
+  id           Int       @id @default(autoincrement())
+  taskCode     String    @unique @map("task_code")
+  assetId      Int       @map("asset_id")
+  status       String    @default("PENDING")
+  priority     String    @default("C")
+  startedAt    DateTime? @map("started_at")
+  completedAt  DateTime? @map("completed_at")
+  progress     Int       @default(0)
+  notes        String?   @db.Text
+  errorMessage String?   @map("error_message") @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  asset Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  logs  ResearchLog[]
+
+  @@index([assetId])
+  @@index([status])
+  @@index([priority])
+  @@index([updatedAt])
+  @@map("research_tasks")
+}
+
+model ResearchLog {
+  id        Int      @id @default(autoincrement())
+  assetId   Int      @map("asset_id")
+  taskId    Int?     @map("task_id")
+  action    String
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  asset Asset         @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  task  ResearchTask? @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([assetId, createdAt])
+  @@index([taskId, createdAt])
+  @@map("research_logs")
+}
+
+model ContentStudioBatch {
+  id               Int                  @id @default(autoincrement())
+  name             String               @default("未命名批次")
+  total_count      Int                  @default(0)
+  pending_count    Int                  @default(0)
+  processing_count Int                  @default(0)
+  success_count    Int                  @default(0)
+  failed_count     Int                  @default(0)
+  review_count     Int                  @default(0)
+  status           String               @default("OPEN")
+  created_at       DateTime             @default(now())
+  updated_at       DateTime             @updatedAt
+  assets           ContentStudioAsset[]
+
+  @@index([status])
+  @@index([created_at])
+  @@map("content_studio_batches")
+}
+
+model ContentStudioAsset {
+  id                   Int                     @id @default(autoincrement())
+  batch_id             Int?
+  raw_url              String                  @unique
+  source_platform      String                  @default("OTHER")
+  fetched_title        String?
+  raw_author           String?
+  fetched_at           DateTime?
+  raw_snapshot         String?                 @db.Text
+  source_body_override String?                 @db.Text
+  screenshot_url       String?
+  attachment_url       String?
+  official_url         String?
+  content_fingerprint  String?
+  status               String                  @default("NEW")
+  content_type         String                  @default("UNKNOWN")
+  value_score          Int                     @default(0)
+  score_breakdown      Json?
+  classification       Json?
+  review_result        Json?
+  manual_notes         String?                 @db.Text
+  locked_at            DateTime?
+  locked_by            String?
+  site_content_id      Int?
+  created_at           DateTime                @default(now())
+  updated_at           DateTime                @updatedAt
+  batch                ContentStudioBatch?     @relation(fields: [batch_id], references: [id], onDelete: SetNull)
+  site_content         Post?                   @relation(fields: [site_content_id], references: [id], onDelete: SetNull)
+  outputs              ContentStudioOutput[]
+  audits               ContentStudioAudit[]
+  relations            ContentStudioRelation[]
+
+  @@index([batch_id])
+  @@index([status])
+  @@index([content_fingerprint])
+  @@index([source_platform])
+  @@map("content_studio_assets")
+}
+
+model ContentStudioRelation {
+  id            Int                @id @default(autoincrement())
+  asset_id      Int
+  target_type   String
+  target_id     Int
+  relation_type String             @default("RELATED")
+  created_at    DateTime           @default(now())
+  asset         ContentStudioAsset @relation(fields: [asset_id], references: [id], onDelete: Cascade)
+
+  @@unique([asset_id, target_type, target_id, relation_type])
+  @@index([target_type, target_id])
+  @@map("content_studio_relations")
+}
+
+model ContentStudioOutput {
+  id               Int                @id @default(autoincrement())
+  asset_id         Int
+  platform         String
+  status           String             @default("NOT_GENERATED")
+  title_candidates Json?
+  cover_titles     Json?
+  body             String?            @db.Text
+  metadata         Json?
+  review_result    Json?
+  generated_at     DateTime?
+  updated_at       DateTime           @updatedAt
+  asset            ContentStudioAsset @relation(fields: [asset_id], references: [id], onDelete: Cascade)
+
+  @@unique([asset_id, platform])
+  @@index([platform, status])
+  @@map("content_studio_outputs")
+}
+
+model ContentStudioAudit {
+  id         Int                @id @default(autoincrement())
+  asset_id   Int
+  output_id  Int?
+  stage      String
+  provider   String
+  result     Json
+  created_at DateTime           @default(now())
+  asset      ContentStudioAsset @relation(fields: [asset_id], references: [id], onDelete: Cascade)
+
+  @@index([asset_id, stage])
+  @@map("content_studio_audits")
+}
+
+// ChatGPT 内容包导入批次
+model ContentImportBatch {
+  id                Int                    @id @default(autoincrement())
+  name              String                 @default("未命名导入批次")
+  total_count       Int                    @default(0)
+  pending_count     Int                    @default(0)
+  tech_review_count Int                    @default(0)
+  validated_count   Int                    @default(0)
+  failed_count      Int                    @default(0)
+  duplicate_count   Int                    @default(0)
+  imported_count    Int                    @default(0)
+  published_count   Int                    @default(0)
+  status            String                 @default("PREVIEW") // PREVIEW | OPEN | PAUSED | COMPLETED
+  created_at        DateTime               @default(now())
+  updated_at        DateTime               @updatedAt
+  packages          ContentImportPackage[]
+
+  @@index([status])
+  @@index([created_at])
+  @@map("content_import_batches")
+}
+
+// 稳定的 ChatGPT 内容包原始记录与导入状态
+model ContentImportPackage {
+  id                    Int                     @id @default(autoincrement())
+  batch_id              Int
+  package_id            String                  @unique
+  package_version       String
+  raw_json              String                  @db.Text
+  content_fingerprint   String?
+  original_url          String
+  source_type           String
+  source_author         String?
+  source_title          String?
+  source_date           String?
+  verification          Json
+  classification        Json
+  website               Json
+  social                Json
+  editorial_review      Json
+  technical_review      Json?
+  status                String                  @default("PREVIEW")
+  duplicate_reason      String?
+  duplicate_target_type String?
+  duplicate_target_id   Int?
+  error_message         String?                 @db.Text
+  imported_type         String?
+  imported_id           Int?
+  created_at            DateTime                @default(now())
+  updated_at            DateTime                @updatedAt
+  batch                 ContentImportBatch      @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  outputs               ContentImportOutput[]
+  relations             ContentImportRelation[]
+
+  @@index([batch_id])
+  @@index([status])
+  @@index([original_url])
+  @@index([source_type])
+  @@index([imported_type, imported_id])
+  @@map("content_import_packages")
+}
+
+// 内容包对应的社媒待发布成品
+model ContentImportOutput {
+  id               Int                  @id @default(autoincrement())
+  package_id       Int
+  platform         String
+  status           String               @default("NOT_GENERATED") // NOT_GENERATED | READY | NEEDS_REVIEW | MANUALLY_PUBLISHED
+  title_candidates Json?
+  cover_titles     Json?
+  body             String?              @db.Text
+  metadata         Json?
+  review_result    Json?
+  generated_at     DateTime?
+  updated_at       DateTime             @updatedAt
+  package          ContentImportPackage @relation(fields: [package_id], references: [id], onDelete: Cascade)
+
+  @@unique([package_id, platform])
+  @@index([platform, status])
+  @@map("content_import_outputs")
+}
+
+// 内容包导入后的关联对象
+model ContentImportRelation {
+  id            Int                  @id @default(autoincrement())
+  package_id    Int
+  target_type   String
+  target_id     Int
+  relation_type String               @default("RELATED")
+  created_at    DateTime             @default(now())
+  package       ContentImportPackage @relation(fields: [package_id], references: [id], onDelete: Cascade)
+
+  @@unique([package_id, target_type, target_id, relation_type])
+  @@index([target_type, target_id])
+  @@map("content_import_relations")
+}
+
+// alphahole 实验室：实验记录（Beta 预留，真实分析逻辑后续接入）
+model LabExperiment {
+  id         Int      @id @default(autoincrement())
+  labKey     String // personal-company-fit | tool-opportunity-finder | oss-readiness-auditor | content-funnel-diagnosis
+  title      String
+  inputs     Json? // 用户输入结构
+  results    Json? // 分析结果（Beta 阶段可能为空）
+  status     String   @default("DRAFT") // DRAFT | PROCESSING | READY | FAILED
+  version    String   @default("beta")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@index([labKey])
+  @@index([status])
+  @@map("lab_experiments")
+}
+
+// ──────── ResearchAsset：AH 研究资产层（ZIP 导入核心） ────────
+// AH 编号是研究资产编号，不是文章编号；终态 FINAL/MERGE/REJECT 分别承载内容/补丁/边界知识
+model ResearchAsset {
+  id                   Int      @id @default(autoincrement())
+  ahId                 String   @unique // AH-0001 ~ AH-0621
+  title                String
+  assetType            String   @default("ARTICLE") // ARTICLE | METHOD | PRODUCT | EVIDENCE | MERGE_PATCH | REJECT_KNOWLEDGE | EXPERIMENT | LAB
+  terminalState        String // FINAL | MERGE | REJECT（以包内 manifest 为准）
+  evidenceLevel        String? // 证据等级（SOURCE_CLAIM / VERIFIED_FACT / L0-L5 等）
+  sourceBatch          Int? // Batch 号
+  status               String   @default("DRAFT") // DRAFT（默认）| PUBLISHED | HIDDEN
+  summary              String?  @db.Text
+  // 各研究字段（保留 ZIP 原始结构，不丢字段）
+  relations            Json?
+  method               Json?
+  research             Json?
+  sources              Json?
+  businessAnalysis     Json?
+  monetizationDNA      Json?
+  productEvolution     Json?
+  compliance           Json?
+  reverseReview        Json?
+  interactiveDecision  Json?
+  mediaManifest        Json?
+  seo                  Json?
+  contentStrategy      Json?
+  // FINAL：平台变体（website 主版本 + WeChat A/B + XHS A/B + Toutiao），禁止建成 5 篇重复文章
+  platformVariants     Json?
+  // MERGE：合并记录
+  mergeRecord          Json?
+  // REJECT：拒绝知识（原因/边界/残余价值/不可推断/恢复条件）
+  rejectRecord         Json?
+  // 导入溯源
+  importedFromZip      String?
+  sourcePath           String? // zip 内 AH 目录路径
+  // 关联网站主内容（FINAL → Post DRAFT）
+  siteContentId        Int?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  media MediaAsset[]
+
+  @@index([terminalState])
+  @@index([assetType])
+  @@index([status])
+  @@index([sourceBatch])
+  @@map("research_assets")
+}
+
+// ZIP 导入批次状态（幂等 + 断点续传）
+model ZipImportLog {
+  id          Int      @id @default(autoincrement())
+  zipName     String   @unique
+  zipHash     String
+  batch       Int
+  status      String   @default("IMPORTED") // IMPORTED | FAILED | SKIPPED
+  finalCount  Int      @default(0)
+  mergeCount  Int      @default(0)
+  rejectCount Int      @default(0)
+  mediaCount  Int      @default(0)
+  error       String?  @db.Text
+  importedAt  DateTime @default(now())
+
+  @@index([batch])
+  @@index([status])
+  @@map("zip_import_logs")
+}
+
+// 媒体资产：原图保留，类型 XHS_A / XHS_B / EXPLANATORY_MEDIA / SOURCE_EVIDENCE
+// 生成的解释图 ≠ 原始证据，禁止把 EXPLANATORY_MEDIA 标成 SOURCE_EVIDENCE
+model MediaAsset {
+  id              Int            @id @default(autoincrement())
+  ahId            String // AH-XXXX
+  mediaType       String // XHS_A | XHS_B | EXPLANATORY_MEDIA | SOURCE_EVIDENCE | OTHER
+  fileName        String
+  filePath        String // 存储路径（public/imports/ah-media/...）
+  fileHash        String?
+  sizeBytes       Int?
+  width           Int?
+  height          Int?
+  researchAsset   ResearchAsset? @relation(fields: [researchAssetId], references: [id], onDelete: SetNull)
+  researchAssetId Int?
+  createdAt       DateTime       @default(now())
+
+  @@index([ahId])
+  @@index([mediaType])
+  @@index([researchAssetId])
+  @@map("media_assets")
+}
+
+// ResearchAsset 关系（只根据 ZIP 已有材料建立，不做 LLM 脑补）
+model ResearchRelation {
+  id             Int    @id @default(autoincrement())
+  sourceAhId     String // 来源 AH
+  relationType   String // STRENGTHENS | METHOD | MERGED_INTO | RELATED
+  targetName     String // 目标名称（来自 relations.json / manifest）
+  targetAhId     String? // 匹配到的目标 AH（名称解析成功时）
+  createdAt      DateTime @default(now())
+
+  @@unique([sourceAhId, relationType, targetName])
+  @@index([targetAhId])
+  @@index([relationType])
+  @@map("research_relations")
 }

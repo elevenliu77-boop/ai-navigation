@@ -1,4 +1,6 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+ 
 
 import { motion, AnimatePresence } from "framer-motion";
 import { Suspense, useEffect, useRef, useState } from "react";

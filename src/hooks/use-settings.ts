@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+ 
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 

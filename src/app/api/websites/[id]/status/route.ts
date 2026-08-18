@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import { AjaxResponse } from "@/lib/utils";
+import { requireAdminApi } from "@/lib/auth/admin";
 
 const prisma = new PrismaClient();
 
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
+  const unauthorized = requireAdminApi(request);
+  if (unauthorized) return unauthorized;
   const params = await props.params;
   try {
     const { status } = await request.json();
+    if (!["pending", "approved", "rejected"].includes(String(status))) {
+      return NextResponse.json(AjaxResponse.fail("Invalid website status"), { status: 400 });
+    }
     const websiteId = parseInt(params.id);
 
     if (isNaN(websiteId)) {

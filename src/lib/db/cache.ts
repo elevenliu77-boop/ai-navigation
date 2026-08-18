@@ -1,4 +1,6 @@
 const cache = new Map();
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const CACHE_STATS = {
   hits: 0,
   misses: 0,

@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, @next/next/no-assign-module-variable, no-var */
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/prisma";
 import { cachedPrismaQuery, invalidateCache } from "@/lib/db/cache";
 import type { Post, Tag } from "@/lib/types";

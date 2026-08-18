@@ -116,7 +116,7 @@ export async function fetchMetadata(url: string) {
       description: decodeHTMLEntities(description),
       image,
     };
-  } catch (error) {
+  } catch {
     throw new Error("获取网站信息失败");
   }
 }

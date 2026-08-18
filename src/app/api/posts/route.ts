@@ -1,10 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAdminApi } from "@/lib/auth/admin";
+import { sanitizeContentFields } from "@/lib/utils/sanitize";
 
 // POST /api/posts — 创建新文章
 export async function POST(req: Request) {
+  const unauthorized = requireAdminApi(req);
+  if (unauthorized) return unauthorized;
   try {
     const data = await req.json();
+    sanitizeContentFields(data, ["content"], ["title", "excerpt"]);
 
     // Check slug uniqueness
     const existing = await prisma.post.findUnique({ where: { slug: data.slug } });
