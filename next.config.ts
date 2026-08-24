@@ -6,6 +6,16 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host", value: "alphahole.xyz" }],
+        destination: "https://alphahole.vercel.app/:path*",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
