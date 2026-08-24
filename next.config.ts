@@ -7,13 +7,26 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   async redirects() {
+    const formalDomain = [{ type: "host", value: "alphahole.xyz" }];
+
     return [
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "alphahole.xyz" }],
-        destination: "https://alphahole.vercel.app/:path*",
-        permanent: true,
-      },
+      { source: "/", has: formalDomain, destination: "https://alphahole.vercel.app/", permanent: false },
+      { source: "/posts", has: formalDomain, destination: "https://alphahole.vercel.app/knowledge", permanent: false },
+      { source: "/posts/:path*", has: formalDomain, destination: "https://alphahole.vercel.app/knowledge", permanent: false },
+      { source: "/tools", has: formalDomain, destination: "https://alphahole.vercel.app/tools", permanent: false },
+      { source: "/tools/:path*", has: formalDomain, destination: "https://alphahole.vercel.app/tools", permanent: false },
+      { source: "/prompts", has: formalDomain, destination: "https://alphahole.vercel.app/prompts", permanent: false },
+      { source: "/prompts/:path*", has: formalDomain, destination: "https://alphahole.vercel.app/prompts", permanent: false },
+      { source: "/workflows", has: formalDomain, destination: "https://alphahole.vercel.app/workflows", permanent: false },
+      { source: "/workflows/:path*", has: formalDomain, destination: "https://alphahole.vercel.app/workflows", permanent: false },
+      { source: "/cases", has: formalDomain, destination: "https://alphahole.vercel.app/cases", permanent: false },
+      { source: "/cases/:path*", has: formalDomain, destination: "https://alphahole.vercel.app/cases", permanent: false },
+      { source: "/resources", has: formalDomain, destination: "https://alphahole.vercel.app/resources", permanent: false },
+      { source: "/resources/:path*", has: formalDomain, destination: "https://alphahole.vercel.app/resources", permanent: false },
+      { source: "/about", has: formalDomain, destination: "https://alphahole.vercel.app/about", permanent: false },
+      { source: "/privacy", has: formalDomain, destination: "https://alphahole.vercel.app/privacy", permanent: false },
+      { source: "/terms", has: formalDomain, destination: "https://alphahole.vercel.app/terms", permanent: false },
+      { source: "/contact", has: formalDomain, destination: "https://alphahole.vercel.app/contact", permanent: false },
     ];
   },
   async headers() {
