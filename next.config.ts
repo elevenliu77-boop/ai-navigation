@@ -6,6 +6,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Temporary formal-domain mitigation for alphahole #72; remove only after domain ownership cutover is verified.
   async redirects() {
     const formalDomain = [{ type: "host", value: "alphahole.xyz" }];
 
